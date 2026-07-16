@@ -1,75 +1,169 @@
-# React + TypeScript + Vite
+# FlightOps Secure Delivery Factory
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![CI](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/ci.yml/badge.svg)](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/ci.yml)
+[![Security](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/security.yml/badge.svg)](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/security.yml)
+[![Production Smoke Test](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/DDongZheng/flightops-secure-delivery/actions/workflows/smoke-test.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DDongZheng_flightops-secure-delivery&metric=alert_status)](https://sonarcloud.io/summary/overall?id=DDongZheng_flightops-secure-delivery)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DDongZheng_flightops-secure-delivery&metric=coverage)](https://sonarcloud.io/summary/overall?id=DDongZheng_flightops-secure-delivery)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DDongZheng_flightops-secure-delivery&metric=security_rating)](https://sonarcloud.io/summary/overall?id=DDongZheng_flightops-secure-delivery)
 
-Currently, two official plugins are available:
+A small-scale DevSecOps delivery factory for a simulated flight readiness application.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The project demonstrates how GitHub Actions can provide reusable quality, testing and security controls while AWS Amplify remains the AWS-specific continuous deployment and hosting target.
 
-## React Compiler
+## Live Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+[Open the Flight Readiness Dashboard](https://main.d2lh4ktwzmstsc.amplifyapp.com/)
 
-## Expanding the ESLint configuration
+The application uses fictional demonstration data only. 
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+It does not contain real flight, aircraft or operational information.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Objectives
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+This project demonstrates:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- automated code quality checks;
+- unit and component testing;
+- test coverage enforcement;
+- SonarQube Quality Gates;
+- static application security testing;
+- dependency vulnerability controls;
+- protected Pull Request workflows;
+- continuous deployment to AWS Amplify;
+- cloud cost monitoring and budget alerts.
 
+## Application Features
+
+The Flight Readiness Dashboard allows a user to:
+
+- view simulated flight missions;
+- distinguish Draft, Ready and Blocked missions;
+- create a new flight mission;
+- complete a flight readiness checklist;
+- report a technical issue;
+- calculate the mission readiness status automatically.
+
+Readiness rules:
+
+```text
+Mission not submitted
+→ DRAFT
+
+Mission submitted with an incomplete checklist
+→ BLOCKED
+
+Mission submitted with a technical issue
+→ BLOCKED
+
+Mission submitted with all checks completed
+→ READY
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+⚠️ The application currently stores newly created missions in browser memory. Refreshing the page restores the original demonstration data.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 
+## Architecture
+
+```text
+Developer
+    |
+    v
+GitHub Pull Request
+    |
+    +-- GitHub Actions: lint, tests, coverage and build
+    +-- SonarQube Cloud: code quality and Quality Gate
+    +-- GitHub Security: CodeQL and dependency checks
+    |
+    v
+Protected main branch
+    |
+    v
+AWS Amplify Hosting
+    |
+    v
+FlightOps web application
 ```
+
+## Delivery Pipeline
+
+### Pull Request
+
+```text
+Pull Request
+→ ESLint
+→ Unit tests
+→ Coverage gate
+→ Production build
+→ SonarQube analysis
+→ CodeQL analysis
+→ Dependency review
+→ npm audit
+→ Merge allowed
+```
+
+## CI/CD Responsibilities
+### GitHub Actions
+GitHub Actions is the orchestration and governance layer. It determines whether a change is eligible to merge.
+
+It runs:
+```text
+- Dependency installation with npm ci
+- ESLint
+- Vitest
+- V8 test coverage
+- An 80% coverage threshold
+- The production build
+- SonarQube analysis
+- CodeQL
+- Dependency Review
+- npm audit
+```
+### AWS Amplify
+AWS Amplify is the AWS-specific continuous deployment and hosting target.
+
+It can:
+```text
+- Read the protected main branch
+- Use Node.js 24
+- Install dependencies reproducibly
+- Build the Vite application
+- Publish the dist directory
+- Serve the application through HTTPS and the AWS CDN
+```
+
+## Technology Stack 
+### Application
+- React
+- TypeScript
+- Vite
+- HTML and CSS
+
+### Testing
+- Vitest
+- React Testing Livrary
+- jsdom
+- V8 Coverage
+- LCOV
+
+## Quality and Security 
+- ESLint
+- SonarQube Cloud
+- CodeQL
+- Dependency Review
+- npm audit
+- Dependabot
+
+## Delivery and Hosting 
+- GitHub Actions 
+- GitHub Rulesets
+- AWS Aamplify Hosting
+- AWS Budgets (1 dollar maximum😁)
+
+## License
+This project is intended for learning and portfolio demonstration. 
+
+(Specially for undeerstanding the difference between GitHub Actions and AWS Amplify)
+
+

@@ -1,0 +1,44 @@
+name: Production Smoke Test
+
+on:
+  schedule:
+    - cron: '23 7 * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    name: Production smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      APP_URL: https://main.d2lh4ktwzmstsc.amplifyapp.com/
+
+    steps:
+      - name: Check production endpoint
+        run: |
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --retry 5 \
+            --retry-all-errors \
+            --retry-delay 10 \
+            --max-time 30 \
+            "$APP_URL" \
+            --output production.html
+
+      - name: Verify application shell
+        run: |
+          grep --quiet 'id="root"' production.html
+          grep --quiet '/assets/' production.html
+
+      - name: Display smoke test result
+        run: |
+          echo "Production endpoint is reachable."
+          echo "Application shell and frontend assets were detected."
