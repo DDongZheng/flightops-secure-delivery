@@ -1,22 +1,13 @@
-name: CI
+name: Reusable CI
 
 on:
-  push:
-    branches:
-      - main
-
-  pull_request:
-    branches:
-      - main
-
-  workflow_dispatch:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 permissions:
   contents: read
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   quality:
@@ -33,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -48,15 +39,19 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      - name: Run SonarQube analysis
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage/
-          retention-days: 7
-          if-no-files-found: error
-
-      - name: Run SonarQube analysis
-        uses: SonarSource/sonarqube-scan-action@v8
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          retention-days: 7  #覆盖率报告保存时间
+          if-no-files-found: warn
