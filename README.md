@@ -52,8 +52,8 @@ flowchart TD
     Security --> Gate
     Gate --> Main["Protected main branch"]
 
-    Main --> Release["Release workflow"]
-    Release --> StagingBranch["Fixed staging branch"]
+    Main --> Release["Release orchestration"]
+    Release --> StagingBranch["Staging deployment pointer(same SHA as main)"]
     Release --> StagingOIDC["GitHub OIDC<br/>staging role"]
 
     StagingBranch --> AmplifyStaging["AWS Amplify staging"]
