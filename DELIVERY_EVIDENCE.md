@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Evidence baseline | `1143fef5f8f51d67ca9b81484dbf73ea51ea8e53` |
+| Evidence baseline | `7d2d92cb67ffc49469fbe46081d05ce3f812a2b8` |
 | Verified on | 2026-07-17 |
 | Repository | [DDongZheng/flightops-secure-delivery](https://github.com/DDongZheng/flightops-secure-delivery) |
 | Production | [Flight Readiness Dashboard](https://main.d2lh4ktwzmstsc.amplifyapp.com/) |
@@ -56,12 +56,13 @@ Pull Request
 | Staging promotion, deployment verification and smoke tests | [PR #11](https://github.com/DDongZheng/flightops-secure-delivery/pull/11) | `60da1f0f5f7236fcd84433840b44119696c8bcc0` | [Successful Release](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29548058402) |
 | Production approval, deployment verification and smoke tests | [PR #12](https://github.com/DDongZheng/flightops-secure-delivery/pull/12) | `5d6e363c19a5b166978e6829aeda8c75ac9deecb` | [Approval validation Release](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29549715697) |
 | Multilingual secure development policy | [PR #13](https://github.com/DDongZheng/flightops-secure-delivery/pull/13) | `1143fef5f8f51d67ca9b81484dbf73ea51ea8e53` | [Successful end-to-end Release](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29552177587) |
+| Traceable quality, security and deployment evidence | [PR #14](https://github.com/DDongZheng/flightops-secure-delivery/pull/14) | `7d2d92cb67ffc49469fbe46081d05ce3f812a2b8` | [Successful end-to-end Release](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29553327771) |
 
 ## 5. Quality and test evidence
 
 ### 5.1 Latest verified result
 
-The latest complete Release for commit `1143fef5f8f51d67ca9b81484dbf73ea51ea8e53` recorded:
+The latest complete Release for commit `7d2d92cb67ffc49469fbe46081d05ce3f812a2b8` recorded:
 
 | Control | Result |
 | --- | --- |
@@ -72,9 +73,9 @@ The latest complete Release for commit `1143fef5f8f51d67ca9b81484dbf73ea51ea8e53
 | SonarQube analysis and Quality Gate | Passed |
 | CI Playwright tests | 2 passed in 4.7 seconds |
 | Staging Playwright tests | 2 passed in 2.2 seconds |
-| Production Playwright tests | 2 passed in 3.6 seconds |
+| Production Playwright tests | 2 passed in 2.2 seconds |
 
-Source: [Release run #29552177587](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29552177587).
+Source: [Release run #29553327771](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29553327771).
 
 ### 5.2 Coverage
 
@@ -104,7 +105,7 @@ The thresholds are enforced in `vitest.config.ts`. The HTML and LCOV reports are
 
 ### 6.1 Pull request security gates
 
-PR #13 completed all seven reported checks successfully:
+PR #14 completed all seven reported checks successfully:
 
 - `CI / Quality checks`;
 - `Security / CodeQL analysis`;
@@ -114,9 +115,9 @@ PR #13 completed all seven reported checks successfully:
 - GitHub CodeQL;
 - SonarCloud Code Analysis.
 
-Source: [PR #13 checks](https://github.com/DDongZheng/flightops-secure-delivery/pull/13/checks).
+Source: [PR #14 checks](https://github.com/DDongZheng/flightops-secure-delivery/pull/14/checks).
 
-Dependency Review intentionally runs only for pull request events. It passed on PR #13 and was correctly skipped in the later push-triggered Release.
+Dependency Review intentionally runs only for pull request events. It passed on PR #14 and was correctly skipped in the later push-triggered Release.
 
 ### 6.2 Security control coverage
 
@@ -187,7 +188,7 @@ The approval behavior was explicitly validated in [Release run #29549715697](htt
 The latest end-to-end Release deployed commit:
 
 ```text
-1143fef5f8f51d67ca9b81484dbf73ea51ea8e53
+7d2d92cb67ffc49469fbe46081d05ce3f812a2b8
 ```
 
 The Release recorded the following integrity checks:
@@ -201,7 +202,7 @@ The Release recorded the following integrity checks:
 | Amplify production deployment | Returned `commitId` equals `github.sha` | Passed |
 | Production smoke tests | Two Playwright scenarios | Passed |
 
-Source: [Release run #29552177587](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29552177587).
+Source: [Release run #29553327771](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29553327771).
 
 Both Amplify branches have Auto-build disabled. GitHub Actions explicitly starts each deployment, waits for the Amplify terminal status and rejects a mismatched commit.
 
@@ -217,15 +218,15 @@ The latest Release generated:
 | `production-playwright-report` | Post-production deployment test evidence | 7 days |
 | `gitleaks-results.sarif` | Secret scanning result | GitHub-managed run artifact |
 
-Artifacts are accessible from the [latest Release summary](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29552177587).
+Artifacts are accessible from the [latest Release summary](https://github.com/DDongZheng/flightops-secure-delivery/actions/runs/29553327771).
 
 ## 11. Control traceability
 
 | Objective | Implemented control | Verifiable evidence |
 | --- | --- | --- |
-| Prevent unverified changes from reaching `main` | Pull request Ruleset and six strict required checks | PR #13 and `Protect main` Ruleset |
+| Prevent unverified changes from reaching `main` | Pull request Ruleset and six strict required checks | PR #14 and `Protect main` Ruleset |
 | Enforce repeatable quality checks | Reusable CI workflow | PR and Release quality jobs |
-| Detect application and dependency risks | CodeQL, SonarQube, Dependency Review and npm audit | PR #13 checks |
+| Detect application and dependency risks | CodeQL, SonarQube, Dependency Review and npm audit | PR #14 checks |
 | Detect committed secrets | Gitleaks | PR and Release secret-scan jobs |
 | Verify browser behavior before merge | CI Playwright tests | `playwright-report` |
 | Verify the release in staging | Explicit deploy, commit verification and Playwright | Release staging job |
