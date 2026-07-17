@@ -24,3 +24,9 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright + Chromium
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
