@@ -174,7 +174,7 @@ jobs:
 
       - name: Upload staging Playwright report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: staging-playwright-report
           path: |
@@ -303,7 +303,7 @@ jobs:
 
       - name: Upload production Playwright report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: production-playwright-report
           path: |
