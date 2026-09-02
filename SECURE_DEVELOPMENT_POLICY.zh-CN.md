@@ -2,15 +2,18 @@
 
 [English](SECURE_DEVELOPMENT_POLICY.md) | [Français](SECURE_DEVELOPMENT_POLICY.fr.md) | [中文](SECURE_DEVELOPMENT_POLICY.zh-CN.md)
 
+> [!IMPORTANT]
+> **当前运行模式（2026-09-02）：**本仓库仅用于展示，不再包含有效的 AWS 集成或部署目标。发布自动化必须在本地构建和验证后停止，不得申请云凭证、连接 Staging 或 Production、上传可部署产物或执行部署。本文其他位置关于 AWS、Amplify、OIDC、Environment 审批、部署后测试或生产监控的要求仅作为历史政策背景保留，并由本说明取代。
+
 ## 1. 文档控制
 
 | 字段 | 内容 |
 | --- | --- |
-| 版本 | 1.0 |
+| 版本 | 1.1 |
 | 生效日期 | 2026-07-17 |
 | 政策负责人 | Zheng Qianyuan |
 | 复审频率 | 每季度，以及发生重大变更后 |
-| 适用范围 | 应用代码、依赖、CI/CD 工作流和部署流程 |
+| 适用范围 | 应用代码、依赖和仅构建的 CI/CD 工作流 |
 
 ## 2. 目的
 
@@ -29,11 +32,9 @@
 - npm 依赖及锁定文件；
 - GitHub Actions 工作流；
 - GitHub 仓库和分支规则；
-- GitHub Environments；
-- GitHub OIDC 与 AWS 的身份认证；
-- 项目使用的 AWS 部署角色；
-- AWS Amplify Staging 和 Production 部署；
-- CI、安全、测试和部署证据；
+- 仅构建的发布自动化；
+- CI、安全和测试证据；
+- 为审计与作品展示保留的历史部署证据；
 - 使用 AI 辅助产生的贡献。
 
 本应用是演示系统，只允许使用虚构且不敏感的数据。真实的航班、飞机、乘客、员工或运营信息不在批准范围内。
@@ -148,32 +149,18 @@ GitHub Actions 用于自动执行控制，但不能替代人的责任。当强�
 
 ### 6.5 发布
 
-一次发布必须：
+发布演示必须由人工启动、使用已评审的提交、根据锁定文件安装依赖、执行规定检查，并且只在临时 Runner 内创建优化构建。
 
-1. 来源于受保护的 `main` 分支；
-2. 通过 Reusable CI 和 Security 工作流；
-3. 将同一提交推进到固定的 `staging` 分支；
-4. 显式触发 Amplify Staging 部署；
-5. 验证 Amplify 部署状态和提交 ID；
-6. 通过 Staging Smoke Test；
-7. 进入受保护的 GitHub `production` Environment；
-8. 获得已配置的 Production 审批；
-9. 将同一发布提交部署到 Production；
-10. 验证 Production 部署状态和提交 ID；
-11. 通过 Production Smoke Test。
-
-当 GitHub Actions 作为发布编排平台时，`main` 和 `staging` 的 Amplify Auto-build 必须保持关闭。
+演示必须在验证后停止。禁止申请云凭证、推送部署分支、连接托管环境、上传可部署产物或执行部署。
 
 ### 6.6 运行与维护
 
 项目必须监控：
 
-- 定时 Production Smoke Test；
-- CI 和 Release 失败；
+- CI 和发布演示失败；
 - Dependabot 更新；
 - 定时安全扫描；
 - SonarQube Quality Gate 结果；
-- Amplify 部署结果；
 - 尚未处理的漏洞。
 
 依赖、GitHub Actions 和运行时版本应该在停止支持或出现明显过时问题前完成升级。
@@ -227,17 +214,15 @@ Statements、Branches、Functions 和 Lines 必须分别保持在配置的 80% �
 
 Repository 和 Environment Secrets 必须限制在确实需要它们的工作流和环境中。
 
-AWS 部署认证必须使用 GitHub OIDC 和临时凭据。禁止为日常部署引入长期 AWS Access Key。
+项目没有部署目标时，禁止配置云部署凭证。在确认资源归属后，应该从 GitHub 和 AWS 中移除历史 AWS 变量、Secrets 和信任关系。
 
 如果密钥可能已经泄露，必须立即撤销或轮换，并检查相关历史记录、日志和 Artifact，同时记录该安全事件。
 
 ## 11. CI/CD 安全
 
-工作流权限必须被显式声明、默认使用只读权限、仅向确实需要的 Job 授予写权限、仅向使用 OIDC 的 Job 授予 `id-token: write`，并限制在相关环境和操作范围内。
+工作流权限必须被显式声明、默认使用只读权限，并限制在相关操作范围内。
 
-Staging 和 Production 必须使用不同的 Environment 配置和 AWS 角色。AWS 角色权限必须限制在目标 Amplify 分支所需的操作和资源范围内。
-
-Release 工作流必须比较请求部署的提交 ID 和实际部署的提交 ID。两者不一致时必须判定发布失败。
+现行工作流禁止申请 `id-token: write`、云凭证或部署写权限。发布演示必须保持人工触发且仅执行构建。
 
 第三方 GitHub Actions 必须来自可信且仍在维护的来源、使用明确版本、在首次引入或重大升级前接受评审，并使用最小权限运行。当需要更高等级的供应链保障时，应该考虑将高信任度的发布 Action 固定到完整 Commit SHA。
 
@@ -309,12 +294,9 @@ AI 生成的代码在经过评审、测试和扫描前，必须被视为不可�
 - CodeQL 和依赖漏洞；
 - Gitleaks 结果；
 - Playwright 报告；
-- GitHub Environment 审批历史；
-- Amplify 部署 Job 记录；
-- Staging 和 Production 提交验证；
 - 漏洞修复记录。
 
-政策负责人应该审查测试覆盖率、Quality Gate 状态、CI 和部署成功率、按严重等级和存在时间统计的未修复漏洞、漏洞修复时间、依赖状态、Production Smoke Test 失败、技术债和代码复杂度。
+政策负责人应该审查测试覆盖率、Quality Gate 状态、CI 成功率、按严重等级和存在时间统计的未修复漏洞、漏洞修复时间、依赖状态、技术债和代码复杂度。
 
 当前保留七天的 Artifact 可以提供短期执行证据。如果合同、监管或审计要求需要，应该增加长期证据保留。
 

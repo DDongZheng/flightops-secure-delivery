@@ -2,15 +2,18 @@
 
 [English](SECURE_DEVELOPMENT_POLICY.md) | [Français](SECURE_DEVELOPMENT_POLICY.fr.md) | [中文](SECURE_DEVELOPMENT_POLICY.zh-CN.md)
 
+> [!IMPORTANT]
+> **Current operating mode (2026-09-02):** this repository is showcase-only and has no active AWS integration or deployment target. Release automation must stop after local build and verification. It must not request cloud credentials, contact staging or production, upload a deployable artifact, or deploy. Any AWS, Amplify, OIDC, Environment approval, post-deployment test or production-monitoring requirement elsewhere in this document is retained as historical policy context and is superseded by this notice.
+
 ## 1. Document control
 
 | Field | Value |
 | --- | --- |
-| Version | 1.0 |
+| Version | 1.1 |
 | Effective date | 2026-07-17 |
 | Policy owner | ZHENG Qianyuan |
 | Review frequency | Quarterly and after material changes |
-| Applies to | Application code, dependencies, CI/CD workflows and deployments |
+| Applies to | Application code, dependencies and build-only CI/CD workflows |
 
 ## 2. Purpose
 
@@ -31,11 +34,9 @@ This policy applies to:
 - npm dependencies and the lockfile;
 - GitHub Actions workflows;
 - GitHub repository and branch rules;
-- GitHub Environments;
-- GitHub OIDC authentication to AWS;
-- AWS deployment roles used by the project;
-- AWS Amplify staging and production deployments;
-- CI, security, test and deployment evidence;
+- build-only release automation;
+- CI, security and test evidence;
+- historical deployment evidence retained for audit and portfolio context;
 - AI-assisted contributions.
 
 The application is a demonstration system. Only fictional, non-sensitive data is permitted. Real flight, aircraft, passenger, employee or operational information is outside the approved scope.
@@ -150,32 +151,18 @@ Failures MUST be investigated. A check MUST NOT be disabled or weakened solely t
 
 ### 6.5 Release
 
-A release MUST:
+A release demonstration MUST be manually initiated, use a reviewed commit, install dependencies from the committed lockfile, run the defined checks and create an optimized build only inside the ephemeral runner.
 
-1. originate from the protected `main` branch;
-2. pass reusable CI and security workflows;
-3. promote the same commit to the fixed `staging` branch;
-4. deploy explicitly to Amplify staging;
-5. verify the Amplify deployment status and commit ID;
-6. pass staging smoke tests;
-7. enter the protected GitHub `production` Environment;
-8. receive the configured production approval;
-9. deploy the same release commit to production;
-10. verify the production deployment status and commit ID;
-11. pass production smoke tests.
-
-Automatic Amplify builds for `main` and `staging` MUST remain disabled while GitHub Actions is the release orchestrator.
+It MUST stop after verification. It MUST NOT request cloud credentials, push a deployment branch, contact a hosted environment, upload a deployable artifact or perform a deployment.
 
 ### 6.6 Operation and maintenance
 
 The project MUST monitor:
 
-- scheduled production smoke tests;
-- CI and release failures;
+- CI and release-demonstration failures;
 - Dependabot updates;
 - scheduled security scans;
 - SonarQube Quality Gate results;
-- Amplify deployment results;
 - unresolved vulnerability findings.
 
 Dependencies, actions and runtime versions SHOULD be updated before they become unsupported or materially obsolete.
@@ -235,7 +222,7 @@ Secrets MUST NOT be:
 
 Repository and Environment secrets MUST be limited to the workflows and environments that require them.
 
-AWS deployment authentication MUST use GitHub OIDC and temporary credentials. Long-lived AWS access keys MUST NOT be introduced for routine deployment.
+Cloud deployment credentials MUST NOT be configured while the project has no deployment target. Historical AWS variables, secrets and trust relationships SHOULD be removed from GitHub and AWS after ownership is verified.
 
 If a secret may have been exposed, it MUST be revoked or rotated immediately. The affected history, logs and artifacts MUST be reviewed, and the incident MUST be documented.
 
@@ -246,12 +233,9 @@ Workflow permissions MUST:
 - be explicitly declared;
 - default to read-only access;
 - grant write access only to jobs that require it;
-- grant `id-token: write` only to jobs using OIDC;
 - remain scoped to the relevant environment and operation.
 
-Staging and production MUST use separate Environment configurations and separate AWS roles. AWS roles MUST remain limited to the Amplify actions and resources required for their target branch.
-
-The release workflow MUST compare the requested and deployed commit IDs. A mismatch MUST fail the release.
+The active workflows MUST NOT request `id-token: write`, cloud credentials or deployment write access. The release demonstration MUST remain manual and build-only.
 
 Third-party GitHub Actions MUST come from a reputable and maintained source, use an explicit version, be reviewed before introduction or major upgrade, and operate with minimal permissions. Pinning high-trust release actions to full commit SHAs SHOULD be considered when stronger supply-chain assurance is required.
 
@@ -323,12 +307,9 @@ The following evidence SHOULD be retained or referenced:
 - CodeQL and dependency findings;
 - Gitleaks results;
 - Playwright reports;
-- GitHub Environment approval history;
-- Amplify deployment job records;
-- staging and production commit verification;
 - vulnerability remediation records.
 
-The policy owner SHOULD review test coverage, Quality Gate status, CI and deployment success rate, open vulnerabilities by severity and age, remediation time, dependency status, failed production smoke tests, technical debt and code complexity.
+The policy owner SHOULD review test coverage, Quality Gate status, CI success rate, open vulnerabilities by severity and age, remediation time, dependency status, technical debt and code complexity.
 
 Artifacts currently retained for seven days provide short-term execution evidence. Longer retention SHOULD be introduced if contractual, regulatory or audit requirements demand it.
 

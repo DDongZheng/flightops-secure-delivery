@@ -1,313 +1,51 @@
-# main 的发布入口
-name: Release
+name: Release Demonstration
 
 on:
-  push:
-    branches:
-      - main
-
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+  group: release-demonstration-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
-    name: CI
-    permissions:
-      contents: read
-    uses: ./.github/workflows/reusable-ci.yml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  security:
-    name: Security
-    permissions:
-      actions: read
-      contents: read
-      pull-requests: write
-      security-events: write
-    uses: ./.github/workflows/reusable-security.yml
-
-  staging:
-    name: Deploy and smoke test staging
-    if: github.ref == 'refs/heads/main'
-    needs:
-      - ci
-      - security
+  build-only:
+    name: Build release candidate (no deployment)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    environment:
-      name: staging
-      url: ${{ vars.AMPLIFY_URL }}
-
-    permissions:
-      contents: write
-      id-token: write
-
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
-      AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
-      PLAYWRIGHT_BASE_URL: ${{ vars.AMPLIFY_URL }}
+    timeout-minutes: 15
 
     steps:
-      - name: Check out release commit
+      - name: Check out repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Promote release commit to staging branch
-        run: |
-          git push origin "HEAD:refs/heads/${AMPLIFY_BRANCH}"
-
-          remote_sha="$(
-            git ls-remote origin "refs/heads/${AMPLIFY_BRANCH}" |
-              cut --fields=1
-          )"
-
-          if [[ "$remote_sha" != "$GITHUB_SHA" ]]; then
-            echo "Staging branch does not match the release commit."
-            echo "Expected: $GITHUB_SHA"
-            echo "Actual:   $remote_sha"
-            exit 1
-          fi
-
-          echo "Staging branch now points to $remote_sha."
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          allowed-account-ids: 637423237757
-          mask-aws-account-id: true
-          role-session-name: flightops-staging-${{ github.run_id }}
-
-      - name: Start Amplify staging deployment
-        id: deployment
-        run: |
-          job_id="$(
-            aws amplify start-job \
-              --app-id "$AMPLIFY_APP_ID" \
-              --branch-name "$AMPLIFY_BRANCH" \
-              --job-type RELEASE \
-              --job-reason "GitHub Actions release $GITHUB_RUN_ID" \
-              --commit-id "$GITHUB_SHA" \
-              --query 'jobSummary.jobId' \
-              --output text
-          )"
-
-          if [[ -z "$job_id" || "$job_id" == "None" ]]; then
-            echo "Amplify did not return a deployment job ID."
-            exit 1
-          fi
-
-          echo "job_id=$job_id" >> "$GITHUB_OUTPUT"
-          echo "Started Amplify deployment job $job_id."
-
-      - name: Wait for Amplify staging deployment
-        env:
-          AMPLIFY_JOB_ID: ${{ steps.deployment.outputs.job_id }}
-        run: |
-          status=""
-          deployed_commit_id=""
-
-          for attempt in {1..60}; do
-            read -r status deployed_commit_id < <(
-              aws amplify get-job \
-                --app-id "$AMPLIFY_APP_ID" \
-                --branch-name "$AMPLIFY_BRANCH" \
-                --job-id "$AMPLIFY_JOB_ID" \
-                --query '[job.summary.status, job.summary.commitId]' \
-                --output text
-            )
-
-            echo "Attempt $attempt: Amplify status is $status."
-
-            case "$status" in
-              SUCCEED)
-                break
-                ;;
-              FAILED|CANCELLED)
-                echo "Amplify deployment ended with status $status."
-                exit 1
-                ;;
-            esac
-
-            sleep 10
-          done
-
-          if [[ "$status" != "SUCCEED" ]]; then
-            echo "Amplify deployment did not finish within 10 minutes."
-            exit 1
-          fi
-
-          if [[ "$deployed_commit_id" != "$GITHUB_SHA" ]]; then
-            echo "Amplify deployed the wrong commit."
-            echo "Expected: $GITHUB_SHA"
-            echo "Actual:   $deployed_commit_id"
-            exit 1
-          fi
-
-          echo "Amplify deployed commit $deployed_commit_id successfully."
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
-          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Run lint checks
+        run: npm run lint
 
-      - name: Run staging smoke tests
-        run: npm run test:e2e
+      - name: Run unit and component tests
+        run: npm run test
 
-      - name: Upload staging Playwright report
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: staging-playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
-          if-no-files-found: warn
+      - name: Build release candidate locally
+        run: npm run build
 
-  production:
-    name: Deploy and smoke test production
-    if: github.ref == 'refs/heads/main'
-    needs:
-      - staging
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    environment:
-      name: production
-      url: ${{ vars.AMPLIFY_URL }}
-
-    permissions:
-      contents: read
-      id-token: write
-
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
-      AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH }}
-      PLAYWRIGHT_BASE_URL: ${{ vars.AMPLIFY_URL }}
-
-    steps:
-      - name: Check out release commit
-        uses: actions/checkout@v6
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          allowed-account-ids: 637423237757
-          mask-aws-account-id: true
-          role-session-name: flightops-production-${{ github.run_id }}
-
-      - name: Start Amplify production deployment
-        id: production-deployment
+      - name: Record showcase-only result
         run: |
-          job_id="$(
-            aws amplify start-job \
-              --app-id "$AMPLIFY_APP_ID" \
-              --branch-name "$AMPLIFY_BRANCH" \
-              --job-type RELEASE \
-              --job-reason "GitHub Actions production release $GITHUB_RUN_ID" \
-              --commit-id "$GITHUB_SHA" \
-              --query 'jobSummary.jobId' \
-              --output text
-          )"
-
-          if [[ -z "$job_id" || "$job_id" == "None" ]]; then
-            echo "Amplify did not return a production deployment job ID."
-            exit 1
-          fi
-
-          echo "job_id=$job_id" >> "$GITHUB_OUTPUT"
-          echo "Started Amplify production deployment job $job_id."
-
-      - name: Wait for Amplify production deployment
-        env:
-          AMPLIFY_JOB_ID: ${{ steps.production-deployment.outputs.job_id }}
-        run: |
-          status=""
-          deployed_commit_id=""
-
-          for attempt in {1..60}; do
-            read -r status deployed_commit_id < <(
-              aws amplify get-job \
-                --app-id "$AMPLIFY_APP_ID" \
-                --branch-name "$AMPLIFY_BRANCH" \
-                --job-id "$AMPLIFY_JOB_ID" \
-                --query '[job.summary.status, job.summary.commitId]' \
-                --output text
-            )
-
-            echo "Attempt $attempt: Amplify status is $status."
-
-            case "$status" in
-              SUCCEED)
-                break
-                ;;
-              FAILED|CANCELLED)
-                echo "Amplify production deployment ended with status $status."
-                exit 1
-                ;;
-            esac
-
-            sleep 10
-          done
-
-          if [[ "$status" != "SUCCEED" ]]; then
-            echo "Amplify production deployment did not finish within 10 minutes."
-            exit 1
-          fi
-
-          if [[ "$deployed_commit_id" != "$GITHUB_SHA" ]]; then
-            echo "Amplify deployed the wrong production commit."
-            echo "Expected: $GITHUB_SHA"
-            echo "Actual:   $deployed_commit_id"
-            exit 1
-          fi
-
-          echo "Amplify deployed production commit $deployed_commit_id successfully."
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run production smoke tests
-        run: npm run test:e2e
-
-      - name: Upload production Playwright report
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: production-playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
-          if-no-files-found: warn
+          {
+            echo "## Release demonstration"
+            echo
+            echo "The release candidate was built and verified inside the GitHub runner."
+            echo
+            echo "- No cloud credentials were requested."
+            echo "- No staging or production environment was contacted."
+            echo "- No deployment was performed."
+            echo "- No build artifact was uploaded or retained."
+          } >> "$GITHUB_STEP_SUMMARY"
