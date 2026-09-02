@@ -2,15 +2,18 @@
 
 [English](SECURE_DEVELOPMENT_POLICY.md) | [Français](SECURE_DEVELOPMENT_POLICY.fr.md) | [中文](SECURE_DEVELOPMENT_POLICY.zh-CN.md)
 
+> [!IMPORTANT]
+> **Mode de fonctionnement actuel (02/09/2026) :** ce dépôt est uniquement destiné à la démonstration et ne comporte plus d’intégration AWS ni de cible de déploiement active. L’automatisation de release doit s’arrêter après le build local et les vérifications. Elle ne doit demander aucun identifiant cloud, contacter aucun environnement de staging ou de production, téléverser aucun artefact déployable ni effectuer de déploiement. Toute exigence AWS, Amplify, OIDC, d’approbation d’environnement, de test post-déploiement ou de surveillance de production figurant ailleurs dans ce document est conservée comme contexte historique et remplacée par le présent avis.
+
 ## 1. Gestion du document
 
 | Champ | Valeur |
 | --- | --- |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date d’entrée en vigueur | 2026-07-17 |
 | Responsable de la politique | ZHENG Qianyuan |
 | Fréquence de révision | Trimestrielle et après toute évolution majeure |
-| Périmètre | Code applicatif, dépendances, workflows CI/CD et déploiements |
+| Périmètre | Code applicatif, dépendances et workflows CI/CD limités au build |
 
 ## 2. Objet
 
@@ -31,11 +34,9 @@ Cette politique s’applique :
 - aux dépendances npm et au fichier de verrouillage ;
 - aux workflows GitHub Actions ;
 - au dépôt GitHub et aux règles de branches ;
-- aux GitHub Environments ;
-- à l’authentification GitHub OIDC vers AWS ;
-- aux rôles AWS utilisés pour les déploiements ;
-- aux déploiements AWS Amplify de staging et de production ;
-- aux preuves de CI, de sécurité, de test et de déploiement ;
+- à l’automatisation de release limitée au build ;
+- aux preuves de CI, de sécurité et de test ;
+- aux preuves historiques de déploiement conservées à des fins d’audit et de présentation ;
 - aux contributions assistées par l’IA.
 
 L’application est un système de démonstration. Seules des données fictives et non sensibles sont autorisées. Les données réelles relatives aux vols, aéronefs, passagers, employés ou opérations sont hors du périmètre approuvé.
@@ -150,32 +151,18 @@ Tout échec DOIT être analysé. Un contrôle NE DOIT PAS être désactivé ou a
 
 ### 6.5 Livraison
 
-Une livraison DOIT :
+Une démonstration de livraison DOIT être lancée manuellement, utiliser un commit revu, installer les dépendances depuis le fichier de verrouillage, exécuter les contrôles définis et créer un build optimisé uniquement dans le runner éphémère.
 
-1. provenir de la branche `main` protégée ;
-2. réussir les workflows réutilisables de CI et de sécurité ;
-3. promouvoir le même commit vers la branche fixe `staging` ;
-4. déclencher explicitement le déploiement Amplify de staging ;
-5. vérifier l’état et l’identifiant du commit déployé ;
-6. réussir les smoke tests de staging ;
-7. entrer dans le GitHub Environment `production` protégé ;
-8. recevoir l’approbation de production configurée ;
-9. déployer le même commit en production ;
-10. vérifier l’état et l’identifiant du commit de production ;
-11. réussir les smoke tests de production.
-
-Les builds automatiques Amplify de `main` et `staging` DOIVENT rester désactivés tant que GitHub Actions orchestre les livraisons.
+Elle DOIT s’arrêter après les vérifications. Elle NE DOIT PAS demander d’identifiants cloud, pousser une branche de déploiement, contacter un environnement hébergé, téléverser un artefact déployable ni effectuer un déploiement.
 
 ### 6.6 Exploitation et maintien en conditions opérationnelles et de sécurité
 
 Le projet DOIT surveiller :
 
-- les smoke tests planifiés de production ;
-- les échecs de CI et de livraison ;
+- les échecs de CI et de démonstration de livraison ;
 - les mises à jour Dependabot ;
 - les analyses de sécurité planifiées ;
 - les résultats du Quality Gate SonarQube ;
-- les résultats de déploiement Amplify ;
 - les vulnérabilités non résolues.
 
 Les dépendances, actions et versions d’exécution DEVRAIENT être mises à jour avant de devenir non supportées ou significativement obsolètes.
@@ -229,17 +216,15 @@ Les secrets NE DOIVENT PAS être :
 
 Les secrets du dépôt et des Environments DOIVENT être limités aux workflows et environnements qui en ont besoin.
 
-L’authentification de déploiement AWS DOIT utiliser GitHub OIDC et des identifiants temporaires. Les clés d’accès AWS de longue durée NE DOIVENT PAS être introduites pour les déploiements courants.
+Les identifiants de déploiement cloud NE DOIVENT PAS être configurés tant que le projet ne possède aucune cible de déploiement. Les anciennes variables, secrets et relations de confiance AWS DEVRAIENT être supprimés de GitHub et d’AWS après vérification de leur propriété.
 
 En cas d’exposition possible, le secret DOIT être immédiatement révoqué ou renouvelé. L’historique, les logs et les artefacts concernés DOIVENT être examinés et l’incident documenté.
 
 ## 11. Sécurité CI/CD
 
-Les permissions des workflows DOIVENT être explicitement déclarées, être en lecture seule par défaut, n’accorder l’écriture qu’aux jobs qui en ont besoin, n’accorder `id-token: write` qu’aux jobs utilisant OIDC et rester limitées à l’environnement et à l’opération concernés.
+Les permissions des workflows DOIVENT être explicitement déclarées, être en lecture seule par défaut et rester limitées à l’opération concernée.
 
-Le staging et la production DOIVENT utiliser des configurations d’Environment et des rôles AWS séparés. Les rôles AWS DOIVENT rester limités aux actions et ressources Amplify nécessaires à leur branche cible.
-
-Le workflow de livraison DOIT comparer le commit demandé avec le commit réellement déployé. Toute différence DOIT faire échouer la livraison.
+Les workflows actifs NE DOIVENT PAS demander `id-token: write`, des identifiants cloud ou un accès d’écriture de déploiement. La démonstration de livraison DOIT rester manuelle et limitée au build.
 
 Les GitHub Actions tierces DOIVENT provenir d’une source réputée et maintenue, utiliser une version explicite, être revues avant leur introduction ou une mise à niveau majeure, et fonctionner avec des permissions minimales. L’épinglage des actions de livraison à un SHA complet DEVRAIT être envisagé lorsqu’une assurance renforcée de la chaîne d’approvisionnement est nécessaire.
 
@@ -311,12 +296,9 @@ Les preuves suivantes DEVRAIENT être conservées ou référencées :
 - constats CodeQL et de dépendances ;
 - résultats Gitleaks ;
 - rapports Playwright ;
-- historique des approbations d’Environment ;
-- jobs de déploiement Amplify ;
-- vérification des commits de staging et de production ;
 - dossiers de correction des vulnérabilités.
 
-Le responsable DEVRAIT suivre la couverture, le Quality Gate, les taux de succès de CI et de déploiement, les vulnérabilités ouvertes par sévérité et ancienneté, le temps de correction, l’état des dépendances, les échecs des smoke tests, la dette technique et la complexité.
+Le responsable DEVRAIT suivre la couverture, le Quality Gate, le taux de succès de la CI, les vulnérabilités ouvertes par sévérité et ancienneté, le temps de correction, l’état des dépendances, la dette technique et la complexité.
 
 Les artefacts conservés actuellement pendant sept jours fournissent des preuves à court terme. Une durée supérieure DEVRAIT être mise en place si des exigences contractuelles, réglementaires ou d’audit l’imposent.
 

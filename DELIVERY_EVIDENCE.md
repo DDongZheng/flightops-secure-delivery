@@ -1,5 +1,8 @@
 # FlightOps Secure Delivery Factory — Delivery Evidence
 
+> [!IMPORTANT]
+> This document is a historical evidence record for the AWS Amplify delivery exercise completed on 2026-07-17. AWS deployment, hosted staging/production environments and scheduled runtime monitoring have since been retired. Links and results below prove past execution only and do not represent the current architecture or assert that any endpoint remains available.
+
 ## 1. Document information
 
 | Field | Value |
@@ -7,12 +10,12 @@
 | Evidence baseline | `7d2d92cb67ffc49469fbe46081d05ce3f812a2b8` |
 | Verified on | 2026-07-17 |
 | Repository | [DDongZheng/flightops-secure-delivery](https://github.com/DDongZheng/flightops-secure-delivery) |
-| Production | [Flight Readiness Dashboard](https://main.d2lh4ktwzmstsc.amplifyapp.com/) |
-| Staging | [Staging environment](https://staging.d2lh4ktwzmstsc.amplifyapp.com/) |
+| Production | Historical AWS Amplify deployment — retired |
+| Staging | Historical AWS Amplify deployment — retired |
 
 ## 2. Purpose and evidence boundaries
 
-This document provides traceable evidence for the quality, security and delivery controls implemented by the project.
+This document provides traceable evidence for quality, security and delivery controls implemented during the completed historical deployment exercise.
 
 The evidence combines:
 
